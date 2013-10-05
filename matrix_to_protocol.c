@@ -143,7 +143,6 @@ void endScanEvent(void)
       USBCBSendResume();
     } else {
       tries_before_sleep--;
-      SerialDebug(1, "t_b_s %d\r\n", (int)tries_before_sleep);
       if (tries_before_sleep < 1) {
 	pending_key_wake = 0;
 	SerialDebug(1, "back to sleep\r\n");

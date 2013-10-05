@@ -1,10 +1,5 @@
 /* This code derived from the Keyboard demo in the LUFA stack.
    I include the LUFA copyright below.
-
-
-   This file is supposed to abstract out the details of the USB
-   layer from the rest of the firmware.
-
 */
 
 /*

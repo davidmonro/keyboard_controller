@@ -23,6 +23,20 @@ first report seems to get lost.
 
 I've been using this code for my primary keyboard for a year or so.
 
+Most testing has been under Linux, but it appears to work fine under
+Windows as well.
+
+Debugging output (if enabled with the SERIALDEBUG define in kbdcont.h)
+will get spat out the USART TX line (D3 usually) at the baud rate
+defined at the top of uart.c - I find this works fine at a fairly
+ludicrous 921600 baud (using another 32u4 as a usb-serial widget). I've
+also used FTDI chips for this but I haven't tested them at very fast
+speeds.
+
+Currently the one of the debug LEDs toggles every second the main loop
+is running, and one of them is on if we aren't asleep. The other two are
+used to show USB state (connected and configured iirc).
+
 For the 32u4 variant, pins are as follows:
 B0-7 keyboard rows
 C6-7 unused
