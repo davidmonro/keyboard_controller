@@ -1,0 +1,46 @@
+This project is a basic USB keyboard controller based around an Atmel
+ATmega??u? controller.
+
+It requires LUFA (http://www.fourwalledcubicle.com/LUFA.php) to build.
+Current build is against LUFA 130901. Unpack the lufa zip file, and then
+move the LUFA subdirectory within the top level one into this directory.
+
+Initial work has been done on a ATmega32u4. Eventual target is an
+ATmega32u2, although it should fit in smaller variants - with debugging
+off, it should fit in an 8u2.
+
+Currently it does not handle multimedia keys etc as they require a
+multi-function USB device and I've not written the code for that yet.
+
+A pair of 74HC595 shift registers are cascaded to drive the columns of
+the matrix. The rows are connected to PORTB on the MCU.
+
+USB suspend/resume works; there is a hack in there which doubles the
+first keyboard report after a usb resume as otherwise sometimes the
+first report seems to get lost.
+
+I've been using this code for my primary keyboard for a year or so.
+
+For the 32u4 variant, pins are as follows:
+B0-7 keyboard rows
+C6-7 unused
+D0-2 keyboard LEDS (NUM, CAPS, SCRL)
+D3 debug serial out
+D4-6 shift register for driving keyboard columns
+D7 unused
+E0 unused
+F0-1 more LEDS (COMP, KANA)
+F4-7 debug LEDS
+
+For the 32u2 variant, pins are as follows:
+B0-7 keyboard rows
+C0-2,4-7 more LEDS (COMP, KANA), debug LEDS
+D0-2 keyboard LEDS (NUM, CAPS, SCRL)
+D3 debug serial out
+D4-6 shift register for driving keyboard columns
+D7 unused
+
+Assuming you keep PORTB for the row inputs (you need one
+with pin change interrupts on all pins unless you add more
+hardware) then changing the other pin assignments should
+just involve editing LEDs.h and shiftreg.c.
