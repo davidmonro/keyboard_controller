@@ -1,6 +1,8 @@
 This project is a basic USB keyboard controller based around an Atmel
 ATmega??u? controller.
 
+It is licensed under the GPL
+
 It requires LUFA (http://www.fourwalledcubicle.com/LUFA.php) to build.
 Current build is against LUFA 130901. Unpack the lufa zip file, and then
 move the LUFA subdirectory within the top level one into this directory.
