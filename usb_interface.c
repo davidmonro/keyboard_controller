@@ -218,9 +218,21 @@ void EVENT_USB_Device_WakeUp(void)
 {
   SerialDebug(1, "uwake UDINT = %02x, UDCON=%02x, UDIEN=%02x, device state = %d\r\n", UDINT, UDCON, UDIEN, USB_DeviceState);
   do_suspend = 0;
-  pending_key_wake = 0;
-  was_usb_wake = 1;
-  should_repeat_report = 1;
+  // This is to work around a strange state we _very_ occasionally hit where
+  // we get here but the host doesn't seem to think we should be awake and
+  // isn't sending us SOF events. This is bad, because we won't poke the host
+  // to wake us up, since we think it already has. Work around it by
+  // pretending it was a keypress wakeup, in which case we will go back to
+  // sleep when the code finds there isn't _really_ a live key.
+  if (((UDINT & 0x10) == 0) && (UDIEN & 0x04)) {
+    SerialDebug(1, "FAKE USB WAKE\r\n");
+    was_usb_wake = 0;
+    should_repeat_report = 0;
+  } else {
+    was_usb_wake = 1;
+    should_repeat_report = 1;
+  }
+
 }
 
 void EVENT_USB_Device_Reset(void)

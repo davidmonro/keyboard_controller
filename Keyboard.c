@@ -143,7 +143,7 @@ int main(void)
   uartInit();
 #endif
 
-  SerialDebug(2, "Hello World\r\n");
+  SerialDebug(1, "Hello World\r\n");
   debugLedOn(3);
 
   // Get the rest of the hardware set up
