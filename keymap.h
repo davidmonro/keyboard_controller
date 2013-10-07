@@ -1,5 +1,8 @@
 // Copyright 2013 David Monro davidm@davidmonro.net
 // This is just a big table of keycodes
+// Keycode 0x00 means no key
+// Keycode 0x01 is special, see addScanPoint()
+// Others are the USB usage code for the key
 #include <avr/pgmspace.h>
 const unsigned char keymap[] PROGMEM = {
 0x00, 0x00, 0xe0, 0x00, 0x00, 0xe4, 0x00, 0x00,
