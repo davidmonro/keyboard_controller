@@ -57,6 +57,24 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM KeyboardReport[] =
 	HID_DESCRIPTOR_KEYBOARD(6)
 };
 
+const USB_Descriptor_HIDReport_Datatype_t PROGMEM ExtraKeysReport[] =
+{
+	/* Very simple report here - I'm going to go for 16 single bit reports
+	 * for the 16 keys in the Generic Desktop 0x80 section.
+	 */
+	HID_RI_USAGE_PAGE(8, 0x01), // Generic Desktop
+	HID_RI_USAGE(8, 0x80),	// System Controls
+	HID_RI_COLLECTION(8, 0x01), //Start a collection
+		HID_RI_USAGE_MINIMUM(8, 0x80),
+		HID_RI_USAGE_MAXIMUM(8, 0x8f),
+		HID_RI_LOGICAL_MINIMUM(8, 0x00),
+		HID_RI_LOGICAL_MAXIMUM(8, 0x01),
+		HID_RI_REPORT_SIZE(8, 0x01),
+		HID_RI_REPORT_COUNT(8, 0x10),
+		HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
+	HID_RI_END_COLLECTION(0)
+};
+
 /** Device descriptor structure. This descriptor, located in FLASH memory, describes the overall
  *  device characteristics, including the supported USB version, control endpoint size and the
  *  number of device configurations. The descriptor is read out by the USB host when the enumeration
@@ -96,7 +114,7 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.Header                 = {.Size = sizeof(USB_Descriptor_Configuration_Header_t), .Type = DTYPE_Configuration},
 
 			.TotalConfigurationSize = sizeof(USB_Descriptor_Configuration_t),
-			.TotalInterfaces        = 1,
+			.TotalInterfaces        = 2,
 
 			.ConfigurationNumber    = 1,
 			.ConfigurationStrIndex  = NO_DESCRIPTOR,
@@ -106,7 +124,7 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.MaxPowerConsumption    = USB_CONFIG_POWER_MA(100)
 		},
 
-	.HID_Interface =
+	.HID1_Interface =
 		{
 			.Header                 = {.Size = sizeof(USB_Descriptor_Interface_t), .Type = DTYPE_Interface},
 
@@ -122,7 +140,7 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.InterfaceStrIndex      = NO_DESCRIPTOR
 		},
 
-	.HID_KeyboardHID =
+	.HID1_KeyboardHID =
 		{
 			.Header                 = {.Size = sizeof(USB_HID_Descriptor_HID_t), .Type = HID_DTYPE_HID},
 
@@ -133,13 +151,50 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.HIDReportLength        = sizeof(KeyboardReport)
 		},
 
-	.HID_ReportINEndpoint =
+	.HID1_ReportINEndpoint =
 		{
 			.Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 
 			.EndpointAddress        = KEYBOARD_EPADDR,
 			.Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
-			.EndpointSize           = KEYBOARD_EPSIZE,
+			.EndpointSize           = HID_EPSIZE,
+			.PollingIntervalMS      = 0x05
+		},
+
+	.HID2_Interface =
+		{
+			.Header                 = {.Size = sizeof(USB_Descriptor_Interface_t), .Type = DTYPE_Interface},
+
+			.InterfaceNumber        = 0x01,
+			.AlternateSetting       = 0x00,
+
+			.TotalEndpoints         = 1,
+
+			.Class                  = HID_CSCP_HIDClass,
+			.SubClass               = HID_CSCP_NonBootSubclass,
+			.Protocol               = HID_CSCP_NonBootProtocol,
+
+			.InterfaceStrIndex      = NO_DESCRIPTOR
+		},
+
+	.HID2_ExtraKeysHID =
+		{
+			.Header                 = {.Size = sizeof(USB_HID_Descriptor_HID_t), .Type = HID_DTYPE_HID},
+
+			.HIDSpec                = VERSION_BCD(01.11),
+			.CountryCode            = 0x00,
+			.TotalReportDescriptors = 1,
+			.HIDReportType          = HID_DTYPE_Report,
+			.HIDReportLength        = sizeof(ExtraKeysReport)
+		},
+
+	.HID2_ReportINEndpoint =
+		{
+			.Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
+
+			.EndpointAddress        = EXTRAKEYS_EPADDR,
+			.Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
+			.EndpointSize           = 2,
 			.PollingIntervalMS      = 0x05
 		},
 };
@@ -222,12 +277,30 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
 
 			break;
 		case HID_DTYPE_HID:
-			Address = &ConfigurationDescriptor.HID_KeyboardHID;
-			Size    = sizeof(USB_HID_Descriptor_HID_t);
+			if (!(wIndex))
+			{
+				Address = &ConfigurationDescriptor.HID1_KeyboardHID;
+				Size    = sizeof(USB_HID_Descriptor_HID_t);
+			}
+			else
+			{
+				Address = &ConfigurationDescriptor.HID2_ExtraKeysHID;
+				Size    = sizeof(USB_HID_Descriptor_HID_t);
+			}
+
 			break;
 		case HID_DTYPE_Report:
-			Address = &KeyboardReport;
-			Size    = sizeof(KeyboardReport);
+			if (!(wIndex))
+			{
+				Address = &KeyboardReport;
+				Size    = sizeof(KeyboardReport);
+			}
+			else
+			{
+				Address = &ExtraKeysReport;
+				Size    = sizeof(ExtraKeysReport);
+			}
+
 			break;
 	}
 

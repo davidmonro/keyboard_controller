@@ -61,8 +61,8 @@ extern void addScanPoint(kbdscanval_t scanpoint);
 extern void invalidateScan(void);
 extern void endScanEvent(void);
 // extern void sendReport(uint8_t);
-void queueReport(void);
-extern void *dequeueReport(void);
+extern void queueReport(uint8_t);
+extern void *dequeueReport(uint8_t);
 
 // From hardware_interface.c
 extern void initKeyboardHardware(void);

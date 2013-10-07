@@ -55,9 +55,14 @@
 			USB_Descriptor_Configuration_Header_t Config;
 
 			// Keyboard HID Interface
-			USB_Descriptor_Interface_t            HID_Interface;
-			USB_HID_Descriptor_HID_t              HID_KeyboardHID;
-	        USB_Descriptor_Endpoint_t             HID_ReportINEndpoint;
+			USB_Descriptor_Interface_t            HID1_Interface;
+			USB_HID_Descriptor_HID_t              HID1_KeyboardHID;
+			USB_Descriptor_Endpoint_t             HID1_ReportINEndpoint;
+
+			// ExtraKeys HID Interface
+			USB_Descriptor_Interface_t            HID2_Interface;
+			USB_HID_Descriptor_HID_t              HID2_ExtraKeysHID;
+			USB_Descriptor_Endpoint_t             HID2_ReportINEndpoint;
 		} USB_Descriptor_Configuration_t;
 
 		/** Enum for the device string descriptor IDs within the device. Each string descriptor should
@@ -75,14 +80,24 @@
 		/** Endpoint address of the Keyboard HID reporting IN endpoint. */
 		#define KEYBOARD_EPADDR              (ENDPOINT_DIR_IN | 1)
 
+		/** Endpoint address of the Keyboard HID reporting IN endpoint. */
+		#define EXTRAKEYS_EPADDR              (ENDPOINT_DIR_IN | 3)
+
 		/** Size in bytes of the Keyboard HID reporting IN endpoint. */
-		#define KEYBOARD_EPSIZE              8
+		#define HID_EPSIZE              8
 
 	/* Function Prototypes: */
 		uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
 		                                    const uint8_t wIndex,
 		                                    const void** const DescriptorAddress)
 		                                    ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(3);
+
+	/* Struct for the ExtraKeys report */
+               typedef struct
+                {
+                        uint16_t ExtraKeysBitmask;	/* Represents usages 0x80-0x8f of the
+							 * Generic Desktop - System Controls page */
+                } ATTR_PACKED USB_ExtraKeysReport_Data_t;
 
 #endif
 
