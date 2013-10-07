@@ -116,7 +116,8 @@ void EVENT_USB_Device_ConfigurationChanged(void)
 /** Event handler for the library USB Control Request reception event. */
 void EVENT_USB_Device_ControlRequest(void)
 {
-	SerialDebug(1, "UCTRL t %02x c %02x v %04x i %04x l %04x\r\n", USB_ControlRequest.bmRequestType,
+	// warning this one seems to cause initialization hangs if enabled
+	SerialDebug(10, "UCTRL t %02x c %02x v %04x i %04x l %04x\r\n", USB_ControlRequest.bmRequestType,
 		USB_ControlRequest.bRequest, USB_ControlRequest.wValue, USB_ControlRequest.wIndex, USB_ControlRequest.wLength);
         HID_Device_ProcessControlRequest(&Keyboard_HID_Interface);
         HID_Device_ProcessControlRequest(&ExtraKeys_HID_Interface);
@@ -234,7 +235,6 @@ void USB_Poll(void)
 	HID_Device_USBTask(&Keyboard_HID_Interface);
 	HID_Device_USBTask(&ExtraKeys_HID_Interface);
 	USB_USBTask();
-
 }
 
 uint8_t Get_USB_DeviceState(void)
