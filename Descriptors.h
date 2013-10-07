@@ -81,7 +81,7 @@
 		#define KEYBOARD_EPADDR              (ENDPOINT_DIR_IN | 1)
 
 		/** Endpoint address of the Keyboard HID reporting IN endpoint. */
-		#define EXTRAKEYS_EPADDR              (ENDPOINT_DIR_IN | 3)
+		#define EXTRAKEYS_EPADDR              (ENDPOINT_DIR_IN | 2)
 
 		/** Size in bytes of the Keyboard HID reporting IN endpoint. */
 		#define HID_EPSIZE              8
