@@ -152,7 +152,7 @@ void addScanPoint(kbdscanval_t scanpoint)
 	  rep2data.newreport[0] |= 0x20;
 	  break;
 	case 0x11:
-	  rep2data.newreport[0] |= 0x40;
+	  rep2data.newreport[0] |= 0x04;
 	  break;
 	case 0x1b:
 	  rep2data.newreport[1] |= 0x02;
