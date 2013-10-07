@@ -132,7 +132,6 @@ void timerInit(void)
 
 int main(void)
 {
-  //int count = 0;
   unsigned long int nextscan = 0;
   unsigned long int nextprint = 0;
   outstr = realoutstr;		// declaration issue
