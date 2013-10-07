@@ -134,80 +134,73 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
                                          void* ReportData,
                                          uint16_t* const ReportSize)
 {
+	// Used when resending the last report to work around dropped reports on USB resume.
+	// Will be set to 1 if it was the main interface, 2 for the secondary
+	static int resend = 0;
+
+	uint8_t qnum, *PrevBuffer;
+
+	SerialDebug(10, "CB_H_Dev_CrHIDRpt q%d\r\n", qnum);
+
+	if (do_suppress == 1) {
+	  // don't return a report while in the supression window
+	  unsigned long now = getMillis();
+	  if ((signed long)now - (signed long)suppress_expire >= 0) {
+	    do_suppress = 0;
+	  } else {
+	    SerialDebug(2, "rptsup %lu exp %lu\r\n", now, suppress_expire);
+	    *ReportSize = 0;
+	    return false;
+	  }
+	}
 
 	/* Determine which interface must have its report generated */
 	if (HIDInterfaceInfo == &Keyboard_HID_Interface)
         {
-	  // Used when resending the last report to work around dropped reports on USB resume.
-	  static int resend = 0;
-
-	  SerialDebug(10, "CB_H_Dev_CrHIDRpt\r\n");
-
-	  if (resend) {
-	    // Simply send the last report again
-	    // Note - resend can never be true unless we have already sent at least one report, so copying
-	    // the old report structure should be fine.
-	    resend = 0;
-	    memcpy(ReportData,PrevKeyboardHIDReportBuffer,sizeof(USB_KeyboardReport_Data_t));
-	    *ReportSize = sizeof(USB_KeyboardReport_Data_t);
-	    SerialDebug(1, "r*%02x%02x%02x%02x%02x%02x%02x%02x\r\n", ((uint8_t*)ReportData)[0],
-	      ((uint8_t*)ReportData)[1], ((uint8_t*)ReportData)[2], ((uint8_t*)ReportData)[3],
-	      ((uint8_t*)ReportData)[4], ((uint8_t*)ReportData)[5], ((uint8_t*)ReportData)[6], ((uint8_t*)ReportData)[7]);
-	    return true;
-	  }
-	  
-	  if (do_suppress == 1) {
-	    // don't return a report while in the supression window
-	    unsigned long now = getMillis();
-	    if ((signed long)now - (signed long)suppress_expire >= 0) {
-	      do_suppress = 0;
-	    } else {
-	      SerialDebug(2, "rptsup %lu exp %lu\r\n", now, suppress_expire);
-	      *ReportSize = 0;
-	      return false;
-	    }
-	  }
-
-	  // Pull the next report off the queue
-	  void *report = dequeueReport(1);
-
-	  if (report == NULL) {
-	    // Queue was empty
-	    *ReportSize = 0;
-	    return false;
-	  } else {
-	    memcpy(ReportData, report, sizeof(USB_KeyboardReport_Data_t));
-	    *ReportSize = sizeof(USB_KeyboardReport_Data_t);
-	    SerialDebug(1, "r %02x%02x%02x%02x%02x%02x%02x%02x\r\n", ((uint8_t*)ReportData)[0],
-	      ((uint8_t*)ReportData)[1], ((uint8_t*)ReportData)[2], ((uint8_t*)ReportData)[3],
-	      ((uint8_t*)ReportData)[4], ((uint8_t*)ReportData)[5], ((uint8_t*)ReportData)[6], ((uint8_t*)ReportData)[7]);
-
-	    // Did we just resume?
-	    if (should_repeat_report) {
-	      should_repeat_report = 0;
-	      resend = 1;
-	    }
-
-	    return true;
-	  }
+	  qnum = 1;
+	  PrevBuffer = PrevKeyboardHIDReportBuffer;
+	  *ReportSize = sizeof(USB_KeyboardReport_Data_t);
 	} else {
-	  // The Extra Keys interface
+	  qnum = 2;
+	  PrevBuffer = PrevExtraKeysHIDReportBuffer;
+	  *ReportSize = sizeof(USB_ExtraKeysReport_Data_t);
+	}
+
+	if (resend == qnum) {
+	  // Simply send the last report again
+	  // Note - resend can never be true unless we have already
+	  //sent at least one report on that queue, so copying
+	  // the old report structure should be fine.
+	  resend = 0;
+	  memcpy(ReportData,PrevBuffer,*ReportSize);
+	} else {
 	  // Pull the next report off the queue
-	  SerialDebug(10, "EXTRA KEYS RPT\r\n");
-	  void *report = dequeueReport(2);
+	  void *report = dequeueReport(qnum);
 
 	  if (report == NULL) {
 	    // Queue was empty
 	    *ReportSize = 0;
 	    return false;
 	  } else {
-	    memcpy(ReportData, report, sizeof(USB_ExtraKeysReport_Data_t));
-	    *ReportSize = sizeof(USB_ExtraKeysReport_Data_t);
-	    SerialDebug(1, "r2 %02x%02x\r\n", ((uint8_t*)ReportData)[0],
-	      ((uint8_t*)ReportData)[1]);
-	    return true;
+	    memcpy(ReportData, report, *ReportSize);
 	  }
 	}
+	
+#if SERIALDEBUG >= 1
+	{
+	  int i;
+	  SerialDebug2("r*");
+	  for (i=0; i<(*ReportSize);i++) { SerialDebug2("%02x", ((uint8_t*)ReportData)[i]); }
+	  SerialDebug2("\r\n");
+	}
+#endif
+	// Did we just resume?
+	if (should_repeat_report) {
+	  should_repeat_report = 0;
+	  resend = qnum;
+	}
+
+	return true;
 }
 
 void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDInterfaceInfo,
