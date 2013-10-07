@@ -13,12 +13,12 @@
 #include "keymap.h"
 
 #define REPORT1LENGTH 8
-static unsigned char oldreport1[REPORT1LENGTH];
-static unsigned char newreport1[REPORT1LENGTH];
+static uint8_t oldreport1[REPORT1LENGTH];
+static uint8_t newreport1[REPORT1LENGTH];
 
 #define REPORT2LENGTH 2
-static unsigned char oldreport2[REPORT2LENGTH];
-static unsigned char newreport2[REPORT2LENGTH];
+static uint8_t oldreport2[REPORT2LENGTH];
+static uint8_t newreport2[REPORT2LENGTH];
 
 static uint8_t currkey = 0;
 static uint8_t rollover = 0;
@@ -27,105 +27,93 @@ static uint8_t have_a_live_key = 0;
 // Ringbuffer stuff
 #define RINGBUFFERSLOTS ((uint8_t)(8))
 static uint8_t report1RingBuffer[RINGBUFFERSLOTS * REPORT1LENGTH];
-static uint8_t rb1HeadIndx, rb1TailIndx;
 
 static uint8_t report2RingBuffer[RINGBUFFERSLOTS * REPORT2LENGTH];
-static uint8_t rb2HeadIndx, rb2TailIndx;
 
+typedef struct {
+		uint8_t *oldreport;
+		uint8_t *newreport;
+		uint8_t *reportRingBuffer;
+		uint8_t rbHeadIndx;
+		uint8_t rbTailIndx;
+		uint8_t reportlength;
+} reportdata_t;
+
+static reportdata_t rep1data = {oldreport1,newreport1, report1RingBuffer, 0, 0, REPORT1LENGTH};
+static reportdata_t rep2data = {oldreport2,newreport2, report2RingBuffer, 0, 0, REPORT2LENGTH};
 
 void queueReport(uint8_t qnum)
 {
-  void *oldreport,*newreport,*reportRingBuffer;
-  int reportlength;
-  uint8_t *rbTailIndx, *rbHeadIndx;
+  reportdata_t *rd;
 
   if (qnum == 1) {
-    reportRingBuffer = report1RingBuffer;
-    oldreport = oldreport1;
-    newreport = newreport1;
-    reportlength = REPORT1LENGTH;
-    rbTailIndx = &rb1TailIndx;
-    rbHeadIndx = &rb1HeadIndx;
+    rd = &rep1data;
   } else {
-    reportRingBuffer = report2RingBuffer;
-    oldreport = oldreport2;
-    newreport = newreport2;
-    reportlength = REPORT2LENGTH;
-    rbTailIndx = &rb2TailIndx;
-    rbHeadIndx = &rb2HeadIndx;
+    rd = &rep2data;
   }
-  SerialDebug(10, "enq q%d %d\r\n", qnum, (*rbTailIndx));
+  SerialDebug(10, "enq q%d %d\r\n", qnum, rd->rbTailIndx);
    
     // Only bother enqueueing it if it is different to the last one
-  if (memcmp((void *)oldreport, (void *)newreport, reportlength) != 0) {
-    if ((((*rbTailIndx) + 1) % RINGBUFFERSLOTS) != (*rbHeadIndx)) {
-      memcpy(reportRingBuffer + reportlength * (*rbTailIndx),
-	(void *)newreport, reportlength);
-      SerialDebug(2, "enq q%d %d\r\n", qnum, (*rbTailIndx));
-      (*rbTailIndx)++;
-      (*rbTailIndx) %= RINGBUFFERSLOTS;
+  if (memcmp(rd->oldreport, rd->newreport, rd->reportlength) != 0) {
+    if ((((rd->rbTailIndx) + 1) % RINGBUFFERSLOTS) != (rd->rbHeadIndx)) {
+      memcpy(rd->reportRingBuffer + rd->reportlength * (rd->rbTailIndx),
+	rd->newreport, rd->reportlength);
+      SerialDebug(2, "enq q%d %d\r\n", qnum, rd->rbTailIndx);
+      (rd->rbTailIndx) ++;
+      (rd->rbTailIndx) %= RINGBUFFERSLOTS;
     } else {
-      SerialDebug(1, "QFULL h %d t %d\r\n", (int)(*rbHeadIndx),
-	(int)(*rbTailIndx));
+      SerialDebug(1, "QFULL h %d t %d\r\n", rd->rbHeadIndx,
+	rd->rbTailIndx);
     }
     // even if we didn't queue it, no point getting into a loop trying to report it
-    memcpy(oldreport, (void *)newreport, reportlength);
+    memcpy(rd->oldreport, rd->newreport, rd->reportlength);
   }
 }
 
 void *dequeueReport(uint8_t qnum)
 {
   void* ret;
-
-  void *reportRingBuffer;
-  int reportlength;
-  uint8_t *rbTailIndx, *rbHeadIndx;
+  reportdata_t *rd;
 
   if (qnum == 1) {
-    reportRingBuffer = report1RingBuffer;
-    reportlength = REPORT1LENGTH;
-    rbTailIndx = &rb1TailIndx;
-    rbHeadIndx = &rb1HeadIndx;
+    rd = &rep1data;
   } else {
-    reportRingBuffer = report2RingBuffer;
-    reportlength = REPORT2LENGTH;
-    rbTailIndx = &rb2TailIndx;
-    rbHeadIndx = &rb2HeadIndx;
+    rd = &rep2data;
   }
-  SerialDebug(10, "dq q%d %d", qnum, *rbHeadIndx);
+  SerialDebug(10, "dq q%d %d", qnum, rd->rbHeadIndx);
 
-  if ((*rbHeadIndx) == (*rbTailIndx)) {
+  if (rd->rbHeadIndx == rd->rbTailIndx) {
     SerialDebug(10, " queue was empty\r\n");
     return NULL;
   }
   // We know there's something in the queue
-  ret = reportRingBuffer + reportlength * (*rbHeadIndx);
-  SerialDebug(2, "dq q%d %d ok\r\n", qnum, (*rbHeadIndx));
-  (*rbHeadIndx)++;
-  (*rbHeadIndx) %= RINGBUFFERSLOTS;
+  ret = rd->reportRingBuffer + rd->reportlength * rd->rbHeadIndx;
+  SerialDebug(2, "dq q%d %d ok\r\n", qnum, rd->rbHeadIndx);
+  (rd->rbHeadIndx)++;
+  (rd->rbHeadIndx) %= RINGBUFFERSLOTS;
   return ret;
 }
 
 void initScanProcessor(void)
 {
-  memset(oldreport1, 0, REPORT1LENGTH);
-  memset(newreport1, 0, REPORT1LENGTH);
-  memset(oldreport2, 0, REPORT2LENGTH);
-  memset(newreport2, 0, REPORT2LENGTH);
+  memset(rep1data.oldreport, 0, rep1data.reportlength);
+  memset(rep1data.newreport, 0, rep1data.reportlength);
+  memset(rep1data.reportRingBuffer, 0, RINGBUFFERSLOTS * rep1data.reportlength);
+  rep1data.rbHeadIndx = 0;
+  rep1data.rbTailIndx = 0;
 
-  memset(report1RingBuffer, 0, RINGBUFFERSLOTS * REPORT1LENGTH);
-  rb1HeadIndx = 0;
-  rb1TailIndx = 0;
-  memset(report2RingBuffer, 0, RINGBUFFERSLOTS * REPORT2LENGTH);
-  rb2HeadIndx = 0;
-  rb2TailIndx = 0;
+  memset(rep2data.oldreport, 0, rep2data.reportlength);
+  memset(rep2data.newreport, 0, rep2data.reportlength);
+  memset(rep2data.reportRingBuffer, 0, RINGBUFFERSLOTS * rep2data.reportlength);
+  rep2data.rbHeadIndx = 0;
+  rep2data.rbTailIndx = 0;
 }
 
 void beginScanEvent(void)
 {
   // A scan is beginning.
-  memset(newreport1, 0, REPORT1LENGTH);
-  memset(newreport2, 0, REPORT2LENGTH);
+  memset(rep1data.newreport, 0, rep1data.reportlength);
+  memset(rep2data.newreport, 0, rep2data.reportlength);
   currkey = 0;
   have_a_live_key = 0;
   rollover = 0;
@@ -143,7 +131,7 @@ void addScanPoint(kbdscanval_t scanpoint)
     if (key != 0x01) {
       if (key < 0xe0) {
 	// Not a modifier
-	newreport1[2 + currkey] = key;
+	rep1data.newreport[2 + currkey] = key;
 	currkey++;
 	if (currkey > 5) {
 	  currkey = 5;
@@ -152,22 +140,22 @@ void addScanPoint(kbdscanval_t scanpoint)
       } else {
 	// Modifiers are 0xE0 to 0xE7 and map 1:1 to bits 0:7 of the first
 	// byte of the report
-	newreport1[0] |= (1 << (key & 0x0f));
+	rep1data.newreport[0] |= (1 << (key & 0x0f));
       }
     } else {
       // Special key not in normal range
       switch(scanpoint) {
 	case 0x2d:
-	  newreport2[0] |= 0x10;
+	  rep2data.newreport[0] |= 0x10;
 	  break;
 	case 0x0d:
-	  newreport2[0] |= 0x20;
+	  rep2data.newreport[0] |= 0x20;
 	  break;
 	case 0x11:
-	  newreport2[0] |= 0x40;
+	  rep2data.newreport[0] |= 0x40;
 	  break;
 	case 0x1b:
-	  newreport2[1] |= 0x02;
+	  rep2data.newreport[1] |= 0x02;
 	  break;
 	default:
           SerialDebug(1, "UNK SP %02x\r\n", scanpoint);
@@ -190,8 +178,10 @@ void endScanEvent(void)
 
   if (rollover) {
     SerialDebug(1, "blocked keys\r\n");
-    memset(newreport1 + 2, 0x01, 6);
+    memset(rep1data.newreport + 2, 0x01, 6);
     // Don't think we can do anything with report2
+    // So just copy the old report.
+    memcpy(rep2data.newreport, rep2data.oldreport, rep2data.reportlength);
   }
 
   if (pending_key_wake == 0) {
