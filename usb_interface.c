@@ -211,7 +211,7 @@ void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDI
                                           const uint16_t ReportSize)
 {
 	int i;
-	SerialDebug(1, "CB_H_Dev_PrcHIDRpt\r\n");
+	SerialDebug(2, "CB_H_Dev_PrcHIDRpt\r\n");
 	SerialDebug(2, "Rpt data:");
 	for (i=0;i<ReportSize;i++) {
 	  SerialDebug(2, " %02x", ((uint8_t*)ReportData)[i]);
