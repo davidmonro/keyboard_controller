@@ -50,11 +50,13 @@ F4-7 debug LEDS
 
 For the 32u2 variant, pins are as follows:
 B0-7 keyboard rows
-C0-2,4-7 more LEDS (COMP, KANA), debug LEDS
+C2 COMPOSE LED
+C4-7 debug LEDS
 D0-2 keyboard LEDS (NUM, CAPS, SCRL)
 D3 debug serial out
 D4-6 shift register for driving keyboard columns
-D7 unused
+D7 KANA LED
+
 
 Assuming you keep PORTB for the row inputs (you need one
 with pin change interrupts on all pins unless you add more
