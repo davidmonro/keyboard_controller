@@ -6,6 +6,8 @@
 #include "kbdcont.h"
 #include <stdarg.h>
 #include <inttypes.h>
+#include <avr/wdt.h>
+#include <avr/power.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
 #include <avr/io.h>
@@ -135,6 +137,15 @@ int main(void)
   unsigned long int nextscan = 0;
   unsigned long int nextprint = 0;
   outstr = realoutstr;		// declaration issue
+
+#if (ARCH == ARCH_AVR8)
+  /* Disable watchdog if enabled by bootloader/fuses */
+  MCUSR &= ~(1 << WDRF);
+  wdt_disable();
+
+  /* Disable clock division */
+  clock_prescale_set(clock_div_1);
+#endif
 
   timerInit(); // interrupts every ms
 
