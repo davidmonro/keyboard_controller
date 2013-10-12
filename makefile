@@ -12,7 +12,7 @@
 #         LUFA Project Makefile.
 # --------------------------------------
 
-MCU          = atmega32u4
+MCU          = atmega32u2
 ARCH         = AVR8
 BOARD        = USER
 F_CPU        = 16000000
@@ -28,8 +28,8 @@ LD_FLAGS     =
 #    AVRDUDE_PORT              - Name of communication port to use
 #    AVRDUDE_FLAGS             - Flags to pass to avr-dude
 AVRDUDE_FLAGS = -y
-AVRDUDE_PORT = usb
-AVRDUDE_PROGRAMMER = usbasp
+AVRDUDE_PORT = /dev/ttyACM0
+AVRDUDE_PROGRAMMER = avr109
 
 
 # Default target
