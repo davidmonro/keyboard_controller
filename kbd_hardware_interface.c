@@ -109,7 +109,7 @@ void kbdSetLeds(uint8_t ledstate)
   // The input layer does handle other LEDS with higher usage
   // codes, but that would need another report format. TBD.
 
-  SerialDebug(1, "kbdSetLeds %02x\r\n", (int)ledstate);
+  SerialDebug(2, "kbdSetLeds %02x\r\n", (int)ledstate);
 
   // Assignment for now:
   // NUM: D0
@@ -160,3 +160,14 @@ void debugLedOff(uint8_t led) {
 void debugLedToggle(uint8_t led) {
     DEBUGLEDPORT ^= 1 << (led+4);
 }
+
+void kbdSetExtraLeds(uint8_t ledstate)
+{
+  SerialDebug(1, "kbdSetExtraLeds %02x\r\n", (int)ledstate);
+  if (ledstate & 0x01) {
+    debugLedOn(1);
+  } else {
+    debugLedOff(1);
+  }
+}
+

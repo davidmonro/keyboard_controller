@@ -69,7 +69,7 @@ USB_ClassInfo_HID_Device_t ExtraKeys_HID_Interface =
         {
                 .Config =
                         {
-                                .InterfaceNumber              = 0,
+                                .InterfaceNumber              = 1,
                                 .ReportINEndpoint             =
                                         {
                                                 .Address              = EXTRAKEYS_EPADDR,
@@ -217,7 +217,12 @@ void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDI
 	  SerialDebug(2, " %02x", ((uint8_t*)ReportData)[i]);
 	}
 	SerialDebug(2, "\r\n");
-	kbdSetLeds(((uint8_t*)ReportData)[0]);
+	if (HIDInterfaceInfo == &Keyboard_HID_Interface)
+        {
+	  kbdSetLeds(((uint8_t*)ReportData)[0]);
+	} else {
+	  kbdSetExtraLeds(((uint8_t*)ReportData)[0]);
+	}
 }
 
 void USBCBSendResume(void)

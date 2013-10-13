@@ -73,6 +73,7 @@ extern void kbdInitInterruptSources(void);
 extern void kbdConfigureInterruptsForSleep(void);
 extern void kbdConfigureInterruptsForWake(void);
 extern void kbdSetLeds(uint8_t ledstate);
+extern void kbdSetExtraLeds(uint8_t ledstate);
 extern void debugLedOn(uint8_t led);
 extern void debugLedOff(uint8_t led);
 extern void debugLedToggle(uint8_t led);
