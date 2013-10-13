@@ -102,7 +102,7 @@ void goToSleep(void)
   }
 
   do_suppress = 1; // Always pause a bit after waking
-  suppress_expire = (unsigned long)getMillis() + 100UL;
+  suppress_expire = (unsigned long)getMillis() + 20UL;
 }
 
 volatile unsigned long int getMillis(void)
