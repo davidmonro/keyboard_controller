@@ -109,7 +109,7 @@ void kbdSetLeds(uint8_t ledstate)
   // The input layer does handle other LEDS with higher usage
   // codes, but that would need another report format. TBD.
 
-  SerialDebug(2, "kbdSetLeds %02x\r\n", (int)ledstate);
+  SerialDebug(1, "kbdSetLeds %02x\r\n", (int)ledstate);
 
   // Assignment for now:
   // NUM: D0
@@ -163,8 +163,20 @@ void debugLedToggle(uint8_t led) {
 
 void kbdSetExtraLeds(uint8_t ledstate)
 {
+  /* These come in in the following mapping, from the Linux
+   * kernel and our report structure:
+   * 0x01 - LED_MUTE
+   * 0x02 - LED_MAIL
+   * 0x04 - LED_SLEEP
+   * 0x08 - LED_MISC
+   * 0x10 - LED_SUSPEND
+   * 0x20 - LED_CHARGING
+   * This isn't the order they are defined in <linux/input.h>,
+   * it is ordered by usage number (since that allowed me to
+   * coalesce usages 0x4b-0x4d into one report stanza).
+   */
   SerialDebug(1, "kbdSetExtraLeds %02x\r\n", (int)ledstate);
-  if (ledstate & 0x01) {
+  if (ledstate & 0x04) {
     debugLedOn(1);
   } else {
     debugLedOff(1);
